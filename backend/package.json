@@ -22,6 +22,7 @@
     "typeorm": "typeorm-ts-node-esm",
     "migration:generate": "yarn run typeorm migration:generate -d ormconfig.ts",
     "migration:create": "yarn run typeorm migration:create -d ormconfig.ts",
+    "migration:run": "yarn run typeorm migration:run -d ormconfig.ts",
     "generate": "nest g -c awesome-nestjs-schematics --no-spec",
     "g": "yarn generate",
     "migration:revert": "yarn run typeorm migration:revert",
