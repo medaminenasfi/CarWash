@@ -12,18 +12,28 @@ export const Colors = {
   light: {
     text: '#11181C',
     background: '#fff',
-    tint: tintColorLight,
+    tint: '#007AFF',
     icon: '#687076',
     tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    tabIconSelected: '#007AFF',
+    card: '#f8f9fa',
+    border: '#e9ecef',
+    overlay: 'rgba(0, 0, 0, 0.05)',
+    gradientStart: '#0051D5',  // Darker blue for better contrast
+    gradientEnd: '#0096FF',   // Still vibrant but darker
   },
   dark: {
     text: '#ECEDEE',
     background: '#151718',
-    tint: tintColorDark,
+    tint: '#0A84FF',
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    tabIconSelected: '#0A84FF',
+    card: '#1C1C1E',
+    border: '#2C2C2E',
+    overlay: 'rgba(255, 255, 255, 0.05)',
+    gradientStart: '#0A84FF',
+    gradientEnd: '#32D74B',
   },
 };
 
