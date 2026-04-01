@@ -13,7 +13,7 @@ const providers: Provider[] = [
   ValidatorService,
   AwsS3Service,
   GeneratorService,
-  TranslationService,
+  // TranslationService, // Disabled temporarily - i18n issue
 ];
 
 @Global()
