@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, OneToOne, VirtualColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, VirtualColumn } from 'typeorm';
 
 import { AbstractEntity } from '../../common/abstract.entity.ts';
 import { RoleType } from '../../constants/role-type.ts';
@@ -31,6 +31,31 @@ export class UserEntity extends AbstractEntity<UserDto, UserDtoOptions> {
 
   @Column({ nullable: true, type: 'varchar' })
   avatar!: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  region!: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  isActive!: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  twoFaSecret!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastLoginAt!: Date | null;
+
+  @Column({ type: 'boolean', default: false })
+  isFirstLogin!: boolean;
+
+  @Column({ type: 'uuid', nullable: true })
+  createdById!: string | null;
+
+  @ManyToOne(() => UserEntity, (user) => user.createdUsers, { nullable: true })
+  @JoinColumn({ name: 'created_by_id' })
+  createdBy?: UserEntity | null;
+
+  @OneToMany(() => UserEntity, (user) => user.createdBy)
+  createdUsers?: UserEntity[];
 
   @VirtualColumn({
     query: (alias) =>

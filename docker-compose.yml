@@ -1,0 +1,178 @@
+version: '3.8'
+
+# =============================================================================
+# CarWash Mono-Repo Docker Compose
+# =============================================================================
+# This file orchestrates all services for the CarWash application:
+# - Backend API (NestJS)
+# - Admin Dashboard (Next.js)
+# - Frontend Mobile (Expo - optional web preview)
+# - PostgreSQL 16 Database
+# - Redis 7 Cache
+# - PgAdmin Database Management
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # DATABASE SERVICES
+  # ===========================================================================
+  
+  postgres:
+    image: postgres:16
+    container_name: carwash-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-carwash_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-carwash_password}
+      POSTGRES_DB: ${DB_DATABASE:-carwash_db}
+    ports:
+      - "${DB_PORT:-5434}:5432"
+    volumes:
+      - postgres-carwashdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-carwash_user} -d ${DB_DATABASE:-carwash_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - carwash-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: carwash-redis
+    restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-carwashdata:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - carwash-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: carwash-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@carwash.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-carwash123}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - carwash-network
+
+  # ===========================================================================
+  # BACKEND API (NestJS)
+  # ===========================================================================
+  
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: carwash-backend
+    restart: always
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${BACKEND_PORT:-3000}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-carwash_user}
+      DB_PASSWORD: ${DB_PASSWORD:-carwash_password}
+      DB_DATABASE: ${DB_DATABASE:-carwash_db}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      JWT_EXPIRATION_TIME: ${JWT_EXPIRATION_TIME:-3600}
+      JWT_REFRESH_EXPIRATION_TIME: ${JWT_REFRESH_EXPIRATION_TIME:-86400}
+      API_PREFIX: ${API_PREFIX:-api/v1}
+      FALLBACK_LANGUAGE: ${FALLBACK_LANGUAGE:-en}
+      DEFAULT_LANGUAGE: ${DEFAULT_LANGUAGE:-en}
+      THROTTLER_TTL: ${THROTTLER_TTL:-1m}
+      THROTTLER_LIMIT: ${THROTTLER_LIMIT:-10}
+      ENABLE_DOCUMENTATION: ${ENABLE_DOCUMENTATION:-true}
+      NATS_ENABLED: ${NATS_ENABLED:-false}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - carwash-network
+    command: npm run start:prod
+
+  # ===========================================================================
+  # ADMIN DASHBOARD (Next.js)
+  # ===========================================================================
+  
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: carwash-admin
+    restart: always
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    ports:
+      - "${ADMIN_PORT:-3001}:3001"
+    depends_on:
+      - backend
+    networks:
+      - carwash-network
+
+  # ===========================================================================
+  # FRONTEND MOBILE (Expo) - Optional Web Preview
+  # Note: For mobile development, use: npm run start in ./frontend
+  # This container only provides web preview capability
+  # ===========================================================================
+  
+  # frontend-web:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile.web
+  #   container_name: carwash-frontend-web
+  #   restart: always
+  #   ports:
+  #     - "${FRONTEND_PORT:-19006}:19006"
+  #   environment:
+  #     - EXPO_WEB_PORT=19006
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - carwash-network
+  #   profiles:
+  #     - web-preview
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+
+volumes:
+  postgres-carwashdata:
+    driver: local
+  redis-carwashdata:
+    driver: local
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+
+networks:
+  carwash-network:
+    driver: bridge

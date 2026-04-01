@@ -1,0 +1,414 @@
+{
+  "info": {
+    "_postman_id": "carwash-api-collection",
+    "name": "CarWash API - Authentication & User Management",
+    "description": "Complete API collection for CarWash Authentication System with JWT, 2FA, and Role Hierarchy",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "1. Login (Super Admin with 2FA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@carwash.com\",\n  \"password\": \"SuperAdmin123!\"\n}"
+            },
+            "description": "Step 1: Login without 2FA code - returns requires2FA: true"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Verify 2FA Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-2fa",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-2fa"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"superadmin@carwash.com\",\n  \"twoFaCode\": \"123456\"\n}"
+            },
+            "description": "Step 2: Verify Google Authenticator code to get JWT tokens"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Login (Admin/Owner - No 2FA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@carwash.com\",\n  \"password\": \"TempPassword123\"\n}"
+            },
+            "description": "Login for Admin or Owner (no 2FA required)"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "description": "Get new access token using refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Invalidate refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get profile of logged-in user"
+          },
+          "response": []
+        },
+        {
+          "name": "7. Change Password",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me/password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me", "password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SuperAdmin123!\",\n  \"newPassword\": \"NewSecurePassword123!\"\n}"
+            },
+            "description": "Change own password (sets isFirstLogin to false)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👑 Super Admin - Admin Management",
+      "item": [
+        {
+          "name": "1. Create Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{superAdminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/super-admin/admins",
+              "host": ["{{baseUrl}}"],
+              "path": ["super-admin", "admins"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin.paris@carwash.com\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"Paris\",\n  \"region\": \"Paris\",\n  \"phone\": \"+33123456789\"\n}"
+            },
+            "description": "Create new Admin account (receives temp password via email)"
+          },
+          "response": []
+        },
+        {
+          "name": "2. List All Admins",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{superAdminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/super-admin/admins",
+              "host": ["{{baseUrl}}"],
+              "path": ["super-admin", "admins"]
+            },
+            "description": "Get all Admin accounts"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Admin by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{superAdminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/super-admin/admins/{{adminId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["super-admin", "admins", "{{adminId}}"]
+            },
+            "description": "Get specific Admin details"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Admin (Deactivate)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{superAdminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/super-admin/admins/{{adminId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["super-admin", "admins", "{{adminId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false,\n  \"region\": \"Lyon\"\n}"
+            },
+            "description": "Activate/deactivate or modify Admin"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛡️ Admin - Owner Management",
+      "item": [
+        {
+          "name": "1. Create Owner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "owners"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner1@carwash.com\",\n  \"firstName\": \"Owner\",\n  \"lastName\": \"One\",\n  \"phone\": \"+33612345678\"\n}"
+            },
+            "description": "Create new Owner account in Admin's region (receives credentials via email)"
+          },
+          "response": []
+        },
+        {
+          "name": "2. List Owners (My Region)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "owners"]
+            },
+            "description": "Get all Owners in the Admin's region only"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Owner by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/owners/{{ownerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "owners", "{{ownerId}}"]
+            },
+            "description": "Get Owner details (only if in same region)"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Update Owner (Deactivate)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/owners/{{ownerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "owners", "{{ownerId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false,\n  \"phone\": \"+33987654321\"\n}"
+            },
+            "description": "Modify or deactivate Owner"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "superAdminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ownerId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
