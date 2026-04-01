@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/lib/auth-context'
+import { DataProvider } from '@/lib/data-context'
+import { NotificationsProvider } from '@/lib/notifications-context'
 import './globals.css'
 
 const geistSans = Geist({ subsets: ["latin"], variable: '--font-geist-sans' });
@@ -39,7 +41,11 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased bg-light text-dark min-h-screen">
         <AuthProvider>
-          {children}
+          <NotificationsProvider>
+            <DataProvider>
+              {children}
+            </DataProvider>
+          </NotificationsProvider>
         </AuthProvider>
         <Analytics />
       </body>

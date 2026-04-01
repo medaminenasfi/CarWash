@@ -1,16 +1,20 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
+import { useNotifications } from '@/lib/notifications-context';
 import { useRouter } from 'next/navigation';
 import { Bell, LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { NotificationsPanel } from './notifications-panel';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -25,9 +29,14 @@ export default function Header() {
 
       <div className="flex items-center gap-2 md:gap-4">
         {/* Notifications */}
-        <button className="p-2 hover:bg-muted rounded-lg transition-colors relative">
+        <button 
+          onClick={() => setShowNotifications(!showNotifications)}
+          className="p-2 hover:bg-muted rounded-lg transition-colors relative"
+        >
           <Bell className="w-5 h-5 text-foreground" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+          )}
         </button>
 
         {/* User Profile Dropdown */}
@@ -73,6 +82,12 @@ export default function Header() {
           )}
         </div>
       </div>
+
+      {/* Notifications Panel */}
+      <NotificationsPanel 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+      />
     </header>
   );
 }

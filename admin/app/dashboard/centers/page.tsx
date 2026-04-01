@@ -3,98 +3,139 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { topCenters } from '@/lib/mock-data';
-import { Search, Plus, MapPin, Star, MoreVertical } from 'lucide-react';
+import { useData, CarWashCenter } from '@/lib/data-context';
+import { Search, Plus, MoreVertical, Trash2, MapPin, Star } from 'lucide-react';
 import { useState } from 'react';
+import { AddCenterModal } from '@/components/modals/add-center-modal';
+import { EditCenterModal } from '@/components/modals/edit-center-modal';
+import { CentersMap } from '@/components/dashboard/centers-map';
 
 export default function CentersPage() {
+  const { centers, deleteCenter } = useData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredCenters, setFilteredCenters] = useState(topCenters);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCenter, setEditingCenter] = useState<CarWashCenter | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showMap, setShowMap] = useState(true);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    const filtered = topCenters.filter(
-      (center) =>
-        center.name.toLowerCase().includes(value.toLowerCase()) ||
-        center.city.toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredCenters(filtered);
-  };
+  const filteredCenters = centers.filter(
+    (center) =>
+      center.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      center.city.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Car Wash Centers</h1>
-          <p className="text-muted-foreground mt-1">Manage and monitor all car wash centers</p>
+          <p className="text-muted-foreground mt-1">Manage all car wash centers</p>
         </div>
-        <Button className="gap-2">
+        <Button onClick={() => setIsModalOpen(true)} className="gap-2 w-full md:w-auto">
           <Plus className="w-4 h-4" />
           Add Center
         </Button>
       </div>
 
-      {/* Search */}
+      {/* Search Card */}
       <Card className="p-6">
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search by name or city..."
               value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
+          <Button
+            variant={showMap ? 'default' : 'outline'}
+            onClick={() => setShowMap(!showMap)}
+            className="gap-2 w-full md:w-auto"
+          >
+            <MapPin className="w-4 h-4" />
+            {showMap ? 'Hide Map' : 'Show Map'}
+          </Button>
         </div>
       </Card>
 
-      {/* Centers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCenters.length > 0 ? (
-          filteredCenters.map((center) => (
-            <Card key={center.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{center.name}</h3>
-                    <p className="text-sm text-muted-foreground">{center.city}</p>
-                  </div>
-                </div>
-                <button className="p-2 hover:bg-muted rounded transition-colors">
-                  <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </div>
+      {/* Map View */}
+      {showMap && (
+        <div>
+          <CentersMap />
+        </div>
+      )}
 
-              <div className="space-y-3 pt-4 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Reservations</span>
-                  <span className="font-semibold text-foreground">{center.reservations.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Rating</span>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    <span className="font-semibold text-foreground">{center.rating}</span>
-                  </div>
-                </div>
-              </div>
+      {/* Centers Table */}
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                <th className="px-4 md:px-6 py-4 text-left text-sm font-semibold text-foreground">Name</th>
+                <th className="hidden md:table-cell px-6 py-4 text-left text-sm font-semibold text-foreground">City</th>
+                <th className="hidden sm:table-cell px-4 md:px-6 py-4 text-left text-sm font-semibold text-foreground">Rating</th>
+                <th className="px-4 md:px-6 py-4 text-left text-sm font-semibold text-foreground">Reservations</th>
+                <th className="px-4 md:px-6 py-4 text-left text-sm font-semibold text-foreground">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCenters.length > 0 ? (
+                filteredCenters.map((center) => (
+                  <tr key={center.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                    <td className="px-4 md:px-6 py-4 text-sm text-foreground font-medium">{center.name}</td>
+                    <td className="hidden md:table-cell px-6 py-4 text-sm text-muted-foreground">{center.city}</td>
+                    <td className="hidden sm:table-cell px-4 md:px-6 py-4 text-sm">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-foreground">{center.rating}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 md:px-6 py-4 text-sm text-foreground">{center.reservations}</td>
+                    <td className="px-4 md:px-6 py-4 text-sm">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingCenter(center);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="px-3 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteCenter(center.id)}
+                          className="p-2 hover:bg-destructive/10 rounded transition-colors text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                    No centers found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
-              <Button variant="outline" className="w-full mt-4">
-                View Details
-              </Button>
-            </Card>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <p className="text-muted-foreground">No centers found</p>
-          </div>
-        )}
-      </div>
+      <AddCenterModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <EditCenterModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingCenter(null);
+        }}
+        center={editingCenter}
+      />
     </div>
   );
 }

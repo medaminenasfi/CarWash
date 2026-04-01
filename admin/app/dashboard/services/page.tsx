@@ -3,44 +3,45 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { carWashServices } from '@/lib/mock-data';
-import { Search, Plus, Clock, DollarSign, MoreVertical } from 'lucide-react';
+import { useData, Service } from '@/lib/data-context';
+import { Search, Plus, Trash2, Clock, DollarSign } from 'lucide-react';
 import { useState } from 'react';
+import { AddServiceModal } from '@/components/modals/add-service-modal';
+import { EditServiceModal } from '@/components/modals/edit-service-modal';
 
 export default function ServicesPage() {
+  const { services, deleteService } = useData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredServices, setFilteredServices] = useState(carWashServices);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    const filtered = carWashServices.filter(
-      (service) =>
-        service.name.toLowerCase().includes(value.toLowerCase()) ||
-        service.category.toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredServices(filtered);
-  };
+  const filteredServices = services.filter(
+    (service) =>
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getCategoryColor = (category: string) => {
-    const colors: { [key: string]: string } = {
+    const colors: Record<string, string> = {
       'Wash': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
       'Interior': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
       'Detailing': 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
-      'Protection': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-      'Maintenance': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+      'Protection': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+      'Maintenance': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
     };
-    return colors[category] || colors['Wash'];
+    return colors[category] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Services</h1>
-          <p className="text-muted-foreground mt-1">Manage car wash services and pricing</p>
+          <p className="text-muted-foreground mt-1">Manage all car wash services</p>
         </div>
-        <Button className="gap-2">
+        <Button onClick={() => setIsModalOpen(true)} className="gap-2 w-full md:w-auto">
           <Plus className="w-4 h-4" />
           Add Service
         </Button>
@@ -48,72 +49,84 @@ export default function ServicesPage() {
 
       {/* Search */}
       <Card className="p-6">
-        <div className="flex gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search services..."
+              placeholder="Search by service name or category..."
               value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
         </div>
       </Card>
 
-      {/* Services Table */}
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted/50 border-b border-border">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Service Name</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Category</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Price</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Duration</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredServices.length > 0 ? (
-                filteredServices.map((service) => (
-                  <tr key={service.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-foreground">{service.name}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(service.category)}`}>
-                        {service.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center gap-1 font-semibold text-foreground">
-                        <DollarSign className="w-4 h-4" />
-                        {service.price}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="w-4 h-4" />
-                        {service.duration} min
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <button className="p-2 hover:bg-muted rounded transition-colors">
-                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                    No services found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      {/* Services Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredServices.length > 0 ? (
+          filteredServices.map((service) => (
+            <Card key={service.id} className="p-6 hover:shadow-lg transition-shadow flex flex-col">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-lg text-foreground">{service.name}</h3>
+                  <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${getCategoryColor(service.category)}`}>
+                    {service.category}
+                  </span>
+                </div>
+                <button
+                  onClick={() => deleteService(service.id)}
+                  className="p-2 hover:bg-destructive/10 rounded transition-colors text-destructive"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 flex-1 pt-4 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <DollarSign className="w-4 h-4" />
+                    <span className="text-sm">Price</span>
+                  </div>
+                  <span className="text-lg font-semibold text-foreground">${service.price.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm">Duration</span>
+                  </div>
+                  <span className="font-semibold text-foreground">{service.duration} min</span>
+                </div>
+              </div>
+
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => {
+                  setEditingService(service);
+                  setIsEditModalOpen(true);
+                }}
+              >
+                Edit Details
+              </Button>
+            </Card>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <p className="text-muted-foreground">No services found</p>
+          </div>
+        )}
+      </div>
+
+      <AddServiceModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <EditServiceModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingService(null);
+        }}
+        service={editingService}
+      />
     </div>
   );
 }
